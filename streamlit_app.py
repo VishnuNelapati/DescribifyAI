@@ -7,11 +7,54 @@ from azure.core.credentials import AzureKeyCredential
 
 st.set_page_config(page_title="DescribifyAI",page_icon=":robot_face:")
 
-selection = st.selectbox("What option would you like to try ?" ,['Prompt','Image'])
+st.title("Product Information Application")
+
+st.header("Problem Statement")
+st.markdown("""
+        In the fast-paced realm of e-commerce, maintaining an accurate and informative product catalog is crucial for businesses. 
+        However, challenges arise when integrating new products into the catalog, especially when upstream data sources do not 
+        provide comprehensive product descriptions or nutrition information or other required information. This lack of detailed information hinders the effective showcasing of 
+        products on websites, leading to potential customer disengagement.
+    """)
+st.markdown("""
+        Traditionally, the solution involves reaching out to vendors or business partners to obtain missing product details or requesting them to update the product information. 
+        This manual process often results in delays, back-and-forth communication, and may impact the overall efficiency of 
+        updating product listings. Our web application addresses this challenge by offering an automated solution for 
+        generating product descriptions using advanced language models, reducing the dependency on external sources.
+    """)
+st.header("Solution")
+st.markdown("""
+    Our web application provides a comprehensive solution to the challenges posed by incomplete product information. 
+    Leveraging the capabilities of OpenAI GPT-3.5, we empower store managers to generate dynamic product descriptions 
+    with ease. By inputting product titles and brand prompts, GPT-3.5 generates engaging and informative product descriptions 
+    on-demand. This eliminates the need for manual intervention and accelerates the process of enriching product data 
+    for seamless display on webpages.
+""")
+st.markdown("""
+    Additionally, our application caters to the specific use case where store managers can upload images from various 
+    angles directly into database. These images, taken from different perspectives within the store, serve as inputs 
+    to our image analysis model. The integration of Azure Cognitive Services, particularly Optical Character Recognition (OCR), 
+    enables the extraction of essential details such as product titles, brands, nutrition information, and more. This automated 
+    process significantly reduces the workload on store managers, ensuring accurate and efficient extraction of product attributes.
+""")
+st.markdown("""
+    By combining the power of advanced language models and image analysis, our web application not only streamlines the 
+    generation of product descriptions but also enhances the efficiency of acquiring and updating product attributes. 
+    Store managers can effortlessly upload images from all angles, facilitating a robust approach to maintaining an 
+    up-to-date and informative product catalog.
+""")
+
+st.markdown("---")
+
+st.markdown("Currenlty we have two different approaches to get the product infomation.Please choose one of the tabs from below to experiment with.")
+
+# selection = st.selectbox("What option would you like to try ?" ,['Prompt','Image'])
+
+selection = st.radio(horizontal=True,label="Select One",options=['Product Description - Prompt','Product Attributes - Image'],)
 
 open_api_client = OpenAI(api_key=st.secrets['open_api_key'])
 
-if selection == "Prompt":
+if selection == "Product Description - Prompt":
 
     st.title("DescribifyAI")
 
@@ -64,7 +107,7 @@ if selection == "Prompt":
         st.download_button("Download Conversation :arrow_down:",data=str(st.session_state.messages),file_name="conv.txt")
 
 
-if selection == "Image":
+if selection == "Product Attributes - Image":
 
     endpoint = st.secrets['azure_end_point']
     key = st.secrets['azure_api_key']
@@ -105,12 +148,13 @@ if selection == "Image":
                                                 },
                                                 "serving":{"servingSize":"" , "Calories":""}]}'''
                     
-                    extra_info = "Provide any additional deatils or specifications at the end"
+                    extra_info = "Provide any additional deatils or specifications at the end including product descriptions based on the OCR data. "
+                    # "in below format Additional Details : \n Product name : '' ,\n Brand : '' ,\n Warnings : '' etc , Add additional attributes to additional details based on image information. "
 
                     question = "Generate nutritional details or specification here using above OCR outptut in specified format.If no nutrition information is found in the image , please provide details of the OCR text in JSON format."
 
 
-                    m=f"{ocr_output} \n\n Generate nutritional details or specification here using above OCR outptut in below specified format \n\n {expected_format} \n\n {extra_info} \n\n If no nutrition information is found in the image , please provide details of the OCR text in JSON format like product name or brands or serving size or Calories per serving etc.If the product is not a edible item , then do not provide any info of serving size or calories. \n\n"
+                    m=f"{ocr_output}\n\n {result.caption}\n\n {result.dense_captions}\n\n {result.smart_crops} \n\n{result.tags} \n\n Generate nutritional details or specification here using above OCR outptut (contains OCR output , caption , tags , smartCrops,densecaptions etc) in below specified format \n\n {expected_format} \n\n {extra_info} \n\n If no nutrition information is found in the image , please provide details of the OCR text in JSON format like product name or brands or serving size or Calories per serving etc.If the product is not a edible item , then do not provide any info of serving size or calories.Try to formulate product descrition of the product based on above OCR outputs. \n\n"
 
                                     
                     nutrition_response = open_api_client.chat.completions.create(
