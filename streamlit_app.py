@@ -109,6 +109,8 @@ if selection == "Product Description - Prompt":
 
 if selection == "Product Attributes - Image":
 
+    # out = st.toggle(label="Json Format",)
+
     endpoint = st.secrets['azure_end_point']
     key = st.secrets['azure_api_key']
 
@@ -123,7 +125,6 @@ if selection == "Product Attributes - Image":
 
         for index,tab in enumerate(st.tabs([input_image.name for input_image in input_images])):
             
-
         # for index,img in enumerate(input_images):
             with tab:
                 st.image(input_images[index])
@@ -140,15 +141,24 @@ if selection == "Product Attributes - Image":
 
                     ocr_output = f"{result.read}"
 
-                    expected_format = '''{"nutritionFacts":[{
+                    expected_format_dict = '''{"nutritionFacts":[{
                                                     "nutritionName": "nutritionName",
                                                     "percentage": "%",
                                                     "quantity": "",
                                                     "measure": ""
-                                                },
-                                                "serving":{"servingSize":"" , "Calories":""}]}'''
+                                                }],
+                                                "serving":{"servingSize":"" , "Calories":""},
+                                                "Extra Info" : {"ProductName":"" , "Brand":"" ,"Description":"" , etc }
+                    }'''
+
+                    expected_format = ''' A table with nutritionName, percentage , quantity , measure as another columns. Add Serving size and calories details at the end of the table.If the value for any  nutrition name is 20mg , then Quantity should have 20 and measure should have unit i.e mg'''
                     
-                    extra_info = "Provide any additional deatils or specifications at the end including product descriptions based on the OCR data. "
+                    # if out:
+                    #     expected_format = expected_format_dict
+                    # else:
+                    #     expected_format = expected_format_table
+
+                    extra_info = "Provide any additional deatils or specifications at the end including product descriptions like product names , brand of the product , general info of the product using product name and brand etc based on the OCR data as bullet points or key value pairing. "
                     # "in below format Additional Details : \n Product name : '' ,\n Brand : '' ,\n Warnings : '' etc , Add additional attributes to additional details based on image information. "
 
                     question = "Generate nutritional details or specification here using above OCR outptut in specified format.If no nutrition information is found in the image , please provide details of the OCR text in JSON format."
@@ -160,7 +170,7 @@ if selection == "Product Attributes - Image":
                     nutrition_response = open_api_client.chat.completions.create(
                             model = "gpt-3.5-turbo-1106",
                                     messages=[{"role":"user","content":m}],
-                                    max_tokens=1000,
+                                    max_tokens=1200,
                                     temperature=0
                         )
 
